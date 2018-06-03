@@ -1,0 +1,108 @@
+2018-05-03 04:58:02 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-04 05:30:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-03 06:57:11 UT: 590 $wdate==object(DateTime)#114 (3) {
+  ["date"]=>
+  string(26) "2018-05-03 07:15:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-04 06:58:02 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-05 07:00:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-04 06:58:02 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-05 07:00:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-04 06:58:02 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-05 07:00:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-05 06:58:03 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-06 07:15:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-05 06:58:03 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-06 07:15:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-05 06:58:03 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-06 07:15:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-06 04:58:02 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-07 05:30:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-06 17:39:02 UT: 590 $wdate==object(DateTime)#115 (3) {
+  ["date"]=>
+  string(26) "2018-05-07 05:30:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-07 04:58:02 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-08 05:30:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+
+2018-05-07 04:58:02 UT: 590 $wdate==object(DateTime)#98 (3) {
+  ["date"]=>
+  string(26) "2018-05-08 05:30:00.000000"
+  ["timezone_type"]=>
+  int(3)
+  ["timezone"]=>
+  string(14) "Asia/Jerusalem"
+}
+

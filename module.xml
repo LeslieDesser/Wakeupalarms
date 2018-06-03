@@ -1,0 +1,34 @@
+<module>
+	<rawname>wakeupalarms</rawname>
+	<repo>local</repo>
+	<name>Wakeup Alarms</name>
+	<version>14.0.0.2</version>
+	<publisher>Les Desser</publisher>
+	<license>GPLv3+</license>
+	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<category>Applications</category>
+	<description>
+		Allows the creation of future wakeup alarm calls. Calls can be one-off or repeating. The details are stored in the database.
+	</description>
+	<changelog>
+		*14.0.0.2*  General tidy up
+		*14.0.0.1*  Initial clone and update: Based on structure of Ringgroups to incorporate v14 design. Functionality is based on Hotelwakeup module in FreePBX
+	</changelog>
+	<depends>
+		<version>13.0.1</version>
+	</depends>
+	<menuitems>
+		<wakeupalarms>Wakeup Alarms</wakeupalarms>
+	</menuitems>
+	<popovers>
+		<wakeupalarms>
+			<display>wakeupalarms</display>
+			<view>form</view>
+		</wakeupalarms>
+ 	</popovers>
+	<supported>
+		<version>14.0</version>
+	</supported>
+	<location/>
+	<md5sum/>
+</module>

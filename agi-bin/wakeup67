@@ -1,0 +1,248 @@
+#!/usr/bin/env php
+<?php
+# Script runs when feature code *67 is invoked.
+
+//	License for all code of this FreePBX module can be found in the license file inside the module directory
+//	Copyright 2013 Schmooze Com Inc.
+//
+ 
+// Bootstrap FreePBX but don't include any modules (so you won't get anything
+// from the functions.inc.php files of all the modules.)
+//
+	$restrict_mods = true;
+	include '/etc/freepbx.conf';
+	set_time_limit(0);
+	error_reporting(0);
+
+// Connect to AGI:
+//
+	require_once "phpagi.php";
+	$AGI = new AGI();
+	$AGI->answer();
+	$config = FreePBX::Wakeupalarms()->getAlarmConfig();
+	usleep(500);
+	$cid = $AGI->parse_callerid();
+	$lang = $AGI->request['agi_language'];
+
+# Notes:
+# Functionality of the whole file is rather crude and unforgiving.  Needs review. Some has been changed.
+# There was a constant test for <if($lang == 'ja')> providing marginally different wording. This has been removed
+# to provide a more readable code.
+#============================================================================
+//TODO: needs to use AMPUSER through macro-caller-id
+# If not in Operator mode then go straight to Menu to input time, using the callers extension number.
+# (Menu does not return - it loops till hangup)
+	if(!$config['operator_mode'] || !in_array($cid['username'],$config['operator_extensions']))
+		wakeupMenu($AGI, $cid['username'], $lang);
+# Operator mode is turned on and caller is an operator extension.
+# This mode allows operator to enter any extension or external phone number
+# Get number. Loop till get an entry or loop expires.
+	do {
+	  # Allow extension/number entry up to max digits allowed
+		$number = sim_background($AGI, "please-enter-the&number&for&your&wakeup-call&then-press-pound","0123456789",$config['extensionlength']);
+	  # Nothing entered?
+		if(empty($number)) sim_playback($AGI,"error-number&digits/1&an-error-has-occurred");
+	} while (++$x <= 5);
+# End if nothing entered after several tries
+	if(empty($number))
+		sim_playback($AGI, "goodbye");
+		$AGI->hangup();
+	}
+# Confirm entry
+	$AGI->stream_file("you-entered");
+	$AGI->say_digits($number);
+  # Call the menu with entered number - for input of time
+	wakeupMenu($AGI, $number, $lang);
+	exit;
+#============================================================================
+# * The WakeUp Administration Menu
+# * @param  object $AGI    AGI Object
+# * @param  string $number The "number" to which the alarm will be directed
+
+	function wakeupMenu($AGI, $number, $lang) {
+	  # Request option 1 or 2 repeatedly till hangup or loop expires (to stop infinite looping)
+		do {
+			$digit = sim_background($AGI, "for-wakeup-call&press-1&for&letters/a&list&press-2","12");
+		if($digit == 1) {wakeupAdd($AGI, $number, $lang); $x = 0;}
+			elseif($digit == 2)	{wakeupList($AGI, $number, $lang); $x = 0;}
+#			else sim_playback($AGI,"error-number&digits/2&an-error-has-occurred");
+		} while (++$x <= 10);
+	  # Drop through if looping too many times
+		sim_playback($AGI,"error-number&digits/3&an-error-has-occurred");
+		sim_playback($AGI, "goodbye");
+		$AGI->hangup();
+	}
+#============================================================================
+/**
+ * Add a wakeup
+ * @param  object $AGI    The AGI object
+ * @param  string $number The "number" to work with
+ */
+function wakeupAdd($AGI, $number, $lang) {
+# Time entry must contain at least 3 digits. Try 3 times
+	$x = 0;
+	do {
+		$timestr = sim_background($AGI, "please-enter-the&time&for&your&wakeup-call","0123456789",3);
+		if(strlen($timestr) < 3) {sim_playback($AGI, "error-has-occurred&minimum&is&3&digits&please-try-again");}
+	} 	while ((strlen($timestr) < 3) && (++$x < 3));
+	if(strlen($timestr) < 3) {sim_playback($AGI, "error-number&digits/7&you-entered&bad&digits"); return;}
+# Get the 4th digit or the terminating hash
+# Wait up to 5 seconds for it else assume it is not coming
+	$ret = $AGI->wait_for_digit(5000);
+# Convert ASCII to character
+	$last = chr($ret['result']);
+# Append it but ignore hash
+	if($last <> '#') $timestr = $timestr.$last;
+# Time has been entered: Store time as integer
+		$time = (int)($timestr);
+# If zero entered (midnight) treat as 2400
+	if($time == 0) $time = 2400;
+# Invalid time
+	if($time > 2400) {sim_playback($AGI,"error-number&digits/4&an-error-has-occurred"); return;}
+# Time less than 1300 could be either am or pm so we must ask am or pm
+	if($time < 1300) {
+		$ampm = sim_background($AGI, "1-for-am-2-for-pm","12",1);
+	  # Error if timeout
+		if($ampm <> 1 and $ampm <> 2) {sim_playback($AGI, "error-number&digits/8&you-entered&bad&digits"); return;}
+	  # If pm add 1200 for pm
+		if($ampm == 2) $time += 1200;
+	}
+# Convert entered time to unix timestamp - assuming current date
+	$time_wakeup_unix = convert_time($time);
+	if($time_wakeup_unix === false) {sim_playback($AGI,"error-number&digits/5&an-error-has-occurred"); return;}
+# If time + assumed current date is earlier than now then add 1 day
+	$time_now = time();
+	if ($time_wakeup_unix <= $time_now) $time_wakeup_unix += 86400;
+# All OK. Create the callfile
+	FreePBX::Wakeupalarms()->addWakeup($number,$time_wakeup_unix,$lang);
+	sim_playback($AGI,"wakeup-call&added&digits/at");
+	$time = $time_wakeup_unix;
+#	if($lang == 'ja') $AGI->exec("SayUnixTime \"$time,,BdApIM\"");
+	$AGI->exec("SayUnixTime \"$time_wakeup_unix,,IMpABd\"");
+}
+#============================================================================
+/**
+ * List all wakeup calls for said number
+ * @param  object $AGI    The AGI Object
+ * @param  string $number the "number" to work with
+ */
+function wakeupList($AGI, $number, $lang) {
+# Get all callfile details into array
+	$calls = FreePBX::Wakeupalarms()->getAllCalls();
+# Extract those that are for this callers extension (or what number the operator has entered)
+	$myCalls = array();
+	foreach($calls as $call) {if($call['destination'] == $number) $myCalls[] = $call;}
+
+# Keeping this as a sample of some old code	for language 'ja'
+#	if($lang == 'ja') {
+#		if(count($myCalls) != 0) {
+#			sim_playback($AGI,"wakeup-call&jp-wa");
+#			$AGI->say_digits(count($myCalls));
+#			sim_playback($AGI,"jp-arimasu");
+#		} else {
+#			sim_playback($AGI,"wakeup-call&jp-wa");
+#			sim_playback($AGI,"jp-arimasen");
+#			sleep(1);
+#		}
+#	}
+#	else { //Use English as default
+
+# Announce the number of calls we have
+	sim_playback($AGI,"vm-youhave");
+	$AGI->say_digits(count($myCalls));
+	sim_playback($AGI,"wakeup-call");
+# Go through each call
+	foreach($myCalls as $id => $call) {
+		sim_playback($AGI,"wakeup-call");
+		sim_playback($AGI,"number");
+		$AGI->say_digits($id + 1);
+		sim_playback($AGI,"digits/at");
+		$time = $call['timestamp'];
+		$AGI->exec("SayUnixTime \"$time,,IMpABd\"");
+		sleep(1);
+		$digit = sim_background($AGI, "to-cancel-wakeup&press-1&the-next&wakeup-call&press-2&menu&press-3","123",1);
+		switch($digit) {
+			case 1:
+				FreePBX::Wakeupalarms()->removeWakeup($call['filename']);
+				sim_playback($AGI,"wakeup-call-cancelled");
+				wakeupList($AGI, $number, $lang);
+				return;
+			break;
+			case 3:
+				wakeupMenu($AGI, $number, $lang);
+				return;
+			break;
+		}
+	}
+	wakeupMenu($AGI, $number, $lang);
+}
+#============================================================================
+/**
+ * Simulate playback functionality like the dialplan
+ * @param  object $AGI  The AGI Object
+ * @param  string $file Audio files combined by/with '&'
+ */
+function sim_playback($AGI, $file) {
+	$files = explode('&',$file);
+	foreach($files as $f) {
+		$AGI->stream_file($f);
+	}
+}
+#============================================================================
+/**
+ * Simulate background playback with added functionality
+ * @param  object  $AGI      The AGI Object
+ * @param  string  $file     Audio files combined by/with '&'
+ * @param  string  $digits   Allowed digits (if we are prompting for them)
+ * @param  string  $length   Length of allowed digits (if we are prompting for them)
+ * @param  string  $escape   Escape character to exit
+ * @param  integer $timeout  Timeout
+ * @param  integer $maxLoops Max timeout loops
+ * @param  integer $loops    Total loops
+ */
+function sim_background($AGI, $file,$digits='',$length='1',$escape='#',$timeout=15000, $maxLoops=1, $loops=0) {
+	$files = explode('&',$file);
+	$number = '';
+	foreach($files as $f) {
+		$ret = $AGI->stream_file($f,$digits);
+		if($ret['code'] == 200 && $ret['result'] != 0) $number .= chr($ret['result']);
+		if(strlen($number) >= $length) break;
+	}
+	if(trim($digits) != '' && strlen($number) < $length) {
+		while(strlen($number) < $length && $loops < $maxLoops) {
+			$ret = $AGI->wait_for_digit($timeout);
+			if($loops > 0) sim_playback($AGI, "please-try-again");
+		if($ret['code'] == 200 && $ret['result'] == 0) {sim_playback($AGI, "error-number&digits/9&you-entered&bad&digits"); return '';}
+			elseif($ret['code'] == 200) {
+				$digit = chr($ret['result']);
+				if($digit == $escape) break;
+				if(strpos($digits,$digit) !== false) {
+					$number .= $digit;
+					continue; //dont count loops as we are good
+				} else {sim_playback($AGI,"error-number&digits/11&you-entered&bad&digits"); return '';}
+			}
+			else {sim_playback($AGI,"error-number&digits/6&an-error-has-occurred"); return '';}
+			$loops++;
+		}
+	}
+	$number = trim($number);
+	return $number;
+}
+#============================================================================
+function convert_time($timeint) {
+	$w = getdate();
+	$time = (string) $timeint;
+# Convert entered time to unix timestamp - assuming current date
+# mktime parms: hh, mm, ss, MM, DD, YY
+# If 4 digits then time entered in full - like 1335 - HHMM
+	if(strlen($time) == 4) $time_wakeup_unix = mktime( substr( $time, 0, 2 ), substr( $time, 2, 2 ), 0, $w['mon'], $w['mday'], $w['year'] );
+# If 3 digits entered then we have single digit hour - like 130 or 335 - HMM
+	elseif(strlen($time) == 3) $time_wakeup_unix = mktime( substr( $time, 0, 1 ), substr( $time, 1, 2 ), 0, $w['mon'], $w['mday'], $w['year'] );
+# If 1 or 2 digits entered then we have minutes - like 3 or 35 or maybe even 0 - MM. We assume hour is zero
+	elseif(strlen($time) <= 2) $time_wakeup_unix = mktime( 0,  $time, 0, $w['mon'], $w['mday'], $w['year'] );
+# None of these = error
+	else return false;
+# Return unix time
+	return $time_wakeup_unix;
+}
+?>
