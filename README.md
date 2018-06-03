@@ -43,7 +43,8 @@ Future alarms are set up and saved as database records.
 There is a cron job set up that runs every hour at two minute before the hour to initiate a database scan process.
 
 This process extracts from the database all alarms that are due within the next 24-25 hours,
-writes an Asterisk call-file for each, and then updates the database record to move on to the next scheduled time.
+writes an Asterisk call-file for each, and then updates the database record to move on to the next scheduled time,
+or deletes the db record if it is a one-off alarm.
 
 The GUI shows scheduled alarms for both the call files due within 24-25 hours and the future ones in the database.
 
