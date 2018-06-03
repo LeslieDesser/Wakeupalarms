@@ -4,7 +4,7 @@ This is a significantly modified version of the official hotelwakeup module.
 
 It was first modified by myself, Leslie Desser, with the assistance of Lorne Gaetz some time around 2013/4.
 
-The modified version has been in daily use on my customised version of a 2.11 PMX in a Flash system
+The modified version has been in daily use on my customised version of a 2.11 PBX in a Flash system
 
 I have decided to re-do this enhanced version so that it will be compatible with V14 of FreePBX.
 
