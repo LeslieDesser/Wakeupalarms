@@ -1,6 +1,6 @@
 <?php
 # Set to true to let debug code run
-define('LD_DEBUG',true);
+define('LD_DEBUG',false);
 # Feature code used to setup alarms on the phone
 define('K_FEATURE_CODE','*67');
 # Schedule for the periodic cron job to generate alarms
