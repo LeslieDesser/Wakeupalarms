@@ -49,3 +49,13 @@ All alarms - whether in the database or as a call file can be modified or delete
 At the moment the bulk of the functionality is only available from the web based interface, which requires admin login to the system.
 
 For maximum benefit, the module needs to be ported to the User Control Panel.
+
+<h3>Install Instructions</h3>
+
+Click on the green 'Clone or download' button and select Download ZIP and save the file.
+
+In Module Admin click Upload Modules > select Upload (From Hard Disk) > Choose file > Upload (From Hard Disk) and follow instructions.
+
+The module appears under Applications > Wakeup Alarms.
+
+Use the Info button for usage instructions.
