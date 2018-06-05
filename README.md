@@ -1,4 +1,4 @@
-<h2>FreepBX Module - Wakeup Alarms - V14.0.0.1</h2>
+<h2>FreepBX Module - Wakeup Alarms - V14.0.0.2</h2>
 
 This is a significantly modified version of the official hotelwakeup module.
 
