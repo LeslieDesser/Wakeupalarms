@@ -45,6 +45,7 @@
 	} while (++$x <= 5);
 # End if nothing entered after several tries
 	if(empty($number))
+	{
 		sim_playback($AGI, "goodbye");
 		$AGI->hangup();
 	}
